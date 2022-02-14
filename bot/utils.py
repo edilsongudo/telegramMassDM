@@ -2,7 +2,15 @@ import csv
 import random
 import time
 from telethon.errors.rpcerrorlist import PeerFloodError
-from models import MessageSent
+from models import MessageSent, Account
+from telethon.sync import TelegramClient
+
+
+def make_sure_an_account_exists():
+    accounts = Account.select()
+    if len(accounts) == 0:
+        print("No account was found! Please enter a new one")
+        save_credentials()
 
 
 def send_messages(client, message, usernames, min_sleep=30, max_sleep=45):
@@ -37,26 +45,26 @@ def get_usernames():
     return usernames
 
 
+def save_credentials():
+    print("HELP: Visit https://my.telegram.org/ to get the api id and the api hash for your account")
+
+    phone = input(
+        'Enter the account phone number (with country code): ').strip()
+    api_id = int(input('Enter the account api id: ').strip())
+    api_hash = input('Enter the account api_hash: ').strip()
+
+    account = Account(phone=phone, api_id=api_id, api_hash=api_hash)
+    client = TelegramClient(phone, api_id, api_hash)
+    if not client.is_user_authorized():
+        client.send_code_request(phone)
+        print(f'Sending a code to {phone}')
+        client.sign_in(phone, input(f'Enter the code that Telegram sent to {phone}: '))
+    account.save()
+    print('Account saved')
+
+
 def keep_running():
+    """Keep GUI Window Open when program reaches the final line"""
     print('Execution ended. You can close this window...')
     while True:
         pass
-
-
-# def add_accounts():
-#     while True:
-#         ammount_of_credentials = int(input('How many accounts do you want to add?'))
-#         credentials = []
-#         for i in range(ammount_of_credentials):
-#             phone = input('Enter the account phone number (with country code): ').strip()
-#             api_id = input('Enter the account api id: ').strip()
-#             api_hash = input('Enter the account api_hash: ').strip()
-
-#             account = {}
-#             account['api_id'] = api_id
-#             account['api_hash'] = api_hash
-#             account['phone'] = phone
-#             credentials.append(account.copy())
-
-#             with open(os.path.join(os.getcwd(), 'multiconfig.json'), 'w') as config_file:
-#                 json.dump(credentials, config_file, indent=2)
