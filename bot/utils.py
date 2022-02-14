@@ -2,19 +2,29 @@ import csv
 import random
 import time
 from telethon.errors.rpcerrorlist import PeerFloodError
+from models import MessageSent
 
 
 def send_messages(client, message, usernames, min_sleep=30, max_sleep=45):
     for username in usernames:
-        try:
-            client.send_message(username, message)
-            print(f'Sent message "{message}" to user "{username}"')
-            sleep_seconds = random.randint(min_sleep, max_sleep)
-            print(f'Waiting {sleep_seconds} seconds for safety')
-            time.sleep(sleep_seconds)
-        except PeerFloodError:
-            print('You reached Telegram daily limit! Stopping now')
-            break
+        query = MessageSent.select().where(MessageSent.username ==
+                                           username, MessageSent.message == message)
+        if not query.exists():
+            print('Sending Message...')
+            try:
+                client.send_message(username, message)
+                message_record = MessageSent(
+                    username=username, message=message)
+                message_record.save()
+                print(f'Sent message "{message}" to user "{username}"')
+                sleep_seconds = random.randint(min_sleep, max_sleep)
+                print(f'Waiting {sleep_seconds} seconds for safety')
+                time.sleep(sleep_seconds)
+            except PeerFloodError:
+                print('You reached Telegram daily limit! Stopping now')
+                break
+        else:
+            print('Already Sent this message Message. Skipping...')
 
 
 def get_usernames():
