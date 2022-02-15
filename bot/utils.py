@@ -13,7 +13,7 @@ def make_sure_an_account_exists():
         save_credentials()
 
 
-def send_messages(client, message, usernames, min_sleep=30, max_sleep=45):
+def send_messages(client, message, usernames, phone="", min_sleep=45, max_sleep=90):
     for username in usernames:
         query = MessageSent.select().where(MessageSent.username ==
                                            username, MessageSent.message == message)
@@ -24,12 +24,12 @@ def send_messages(client, message, usernames, min_sleep=30, max_sleep=45):
                 message_record = MessageSent(
                     username=username, message=message)
                 message_record.save()
-                print(f'Sent message "{message}" to user "{username}"')
+                print(f'Sent message "{message}" to user "{username}" using phone {phone}')
                 sleep_seconds = random.randint(min_sleep, max_sleep)
                 print(f'Waiting {sleep_seconds} seconds for safety')
                 time.sleep(sleep_seconds)
             except PeerFloodError:
-                print('You reached Telegram daily limit! Stopping now')
+                print(f'{phone} reached Telegram daily limit! Stopping now')
                 break
         else:
             print('Already Sent this message Message. Skipping...')
