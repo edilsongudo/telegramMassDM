@@ -45,20 +45,28 @@ def get_usernames():
     return usernames
 
 
+def make_sure_client_authenticates(phone, api_id, api_hash):
+    print(f'Checking if {phone} is authenticated...')
+    client = TelegramClient(phone, api_id, api_hash)
+    client.connect()
+    if not client.is_user_authorized():
+        print('Just one more step is needed...')
+        print(f'Telegram will send a code to {phone}.')
+        print(f'Please check if you received a code via SMS or telegram app')
+        client.send_code_request(phone)
+        client.sign_in(phone, input(f'Enter the code that Telegram sent to {phone}: '))
+    print('OK')
+    client.disconnect()
+
+
 def save_credentials():
     print("HELP: Visit https://my.telegram.org/ to get the api id and the api hash for your account")
-
     phone = input(
         'Enter the account phone number (with country code): ').strip()
     api_id = int(input('Enter the account api id: ').strip())
     api_hash = input('Enter the account api_hash: ').strip()
-
+    make_sure_client_authenticates(phone, api_id, api_hash)
     account = Account(phone=phone, api_id=api_id, api_hash=api_hash)
-    client = TelegramClient(phone, api_id, api_hash)
-    if not client.is_user_authorized():
-        client.send_code_request(phone)
-        print(f'Sending a code to {phone}')
-        client.sign_in(phone, input(f'Enter the code that Telegram sent to {phone}: '))
     account.save()
     print('Account saved')
 

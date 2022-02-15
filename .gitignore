@@ -2,6 +2,7 @@
 *.ini
 *.session
 *.sqlite3
+*.db
 
 # Backup files # 
 *.bak 
