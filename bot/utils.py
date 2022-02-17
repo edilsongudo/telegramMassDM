@@ -51,27 +51,37 @@ def send_messages(client, message, usernames, phone="", min_sleep=60, max_sleep=
 
 
 def get_usernames():
-    with open('members.csv', 'r') as f:
-        csvreader = csv.reader(f)
-        usernames = []
-        for line in csvreader:
-            if line[0] not in ('username', ''):
-                usernames.append(line[0])
-    return usernames
+    if os.path.isfile('members.csv'):
+        try:
+            with open('members.csv', 'r') as f:
+                csvreader = csv.reader(f)
+                usernames = []
+                for line in csvreader:
+                    if line[0] not in ('username', ''):
+                        usernames.append(line[0])
+            return usernames
+        except Exception as e:
+            print(e)
+    else:
+        print('No group selected. Please select a group to select message from first')
+        return []
 
 
 def make_sure_client_authenticates(phone, api_id, api_hash):
-    print(f'Checking if {phone} is authenticated...')
-    client = TelegramClient(phone, api_id, api_hash)
-    client.connect()
-    if not client.is_user_authorized():
-        print('Just one more step is needed...')
-        print(f'Telegram will send a code to {phone}.')
-        print(f'Please check if you received a code via SMS or telegram app')
-        client.send_code_request(phone)
-        client.sign_in(phone, input(f'Enter the code that Telegram sent to {phone}: '))
-    print('OK')
-    client.disconnect()
+    try:
+        print(f'Checking if {phone} is authenticated...')
+        client = TelegramClient(phone, api_id, api_hash)
+        client.connect()
+        if not client.is_user_authorized():
+            print('Just one more step is needed...')
+            print(f'Telegram will send a code to {phone}.')
+            print(f'Please check if you received a code via SMS or telegram app')
+            client.send_code_request(phone)
+            client.sign_in(phone, input(f'Enter the code that Telegram sent to {phone}: '))
+        print('OK')
+        client.disconnect()
+    except Exception as e:
+        print(e)
 
 
 def save_credentials():
@@ -88,6 +98,55 @@ def save_credentials():
 
 def keep_running():
     """Keep GUI Window Open when program reaches the final line"""
-    print('Execution ended. You can close this window...')
+    print('Execution ended. You can close this window and re-open it again...')
     while True:
         pass
+
+
+def print_accounts(accounts):
+    for account in accounts:
+        print(f'Found {len(accounts)} telegram account(s) saved')
+        make_sure_client_authenticates(
+            account.phone, account.api_id, account.api_hash)
+
+
+def ask_to_add_new_account():
+    answer = None
+    while answer not in ('y', 'n'):
+        answer = input('DO you want to add a new account? [y/n]: ').strip().lower()
+    if answer == "y":
+        print('OK, next add a new account.')
+        save_credentials()
+
+
+def run(account):
+    client = TelegramClient(account.phone, account.api_id, account.api_hash)
+    client.connect()
+    send_messages(client, message=load_message_to_send(),
+                  usernames=get_usernames(), phone=account.phone)
+
+
+def list_accounts():
+    accounts = Account.select()
+    for account in accounts:
+        print(f'{account.id}')
+        print(f'Phone: {account.phone}')
+        print(f'Api Id - {account.api_id}')
+        print(f'Api hash - {account.api_hash}')
+        print('')
+
+
+def delete_account():
+    ids = []
+    accounts = Account.select()
+    for account in accounts:
+        print(f'{account.id} - {account.phone}')
+        ids.append(str(account.id))
+
+    account_to_delete_id = None
+    while account_to_delete_id not in ids:
+        account_to_delete_id = input('Wich account do you want to delete? ')
+    account = Account.select().where(Account.id == account_to_delete_id).get()
+    account.delete_instance()
+    print(f'Successfully deleted {account.phone}')
+
