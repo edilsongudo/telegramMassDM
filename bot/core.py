@@ -2,6 +2,7 @@ import multiprocessing
 from telethon.sync import TelegramClient
 from scrapers import scrape_members
 from models import Account
+import time
 from utils import (get_usernames,
                    send_messages,
                    save_credentials,
@@ -51,8 +52,10 @@ def core():
                         p = multiprocessing.Process(target=run, args=[account])
                         p.start()
                         processes.append(p)
+                        time.sleep(130)
                     for process in processes:
                         process.join()
+                        time.sleep(130)
                 else:
                     print('No accounts found')
 

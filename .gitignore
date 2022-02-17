@@ -1,10 +1,10 @@
 # Project Specific
-*.ini
-*.session
-*.sqlite3
-*.db
-bot/dist/
-bot/build/
+# *.ini
+# *.session
+# *.sqlite3
+# *.db
+# bot/dist/
+# bot/build/
 
 # Backup files # 
 *.bak 
