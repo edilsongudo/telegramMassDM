@@ -5,6 +5,7 @@ import time
 from telethon.errors.rpcerrorlist import PeerFloodError
 from models import MessageSent, Account
 from telethon.sync import TelegramClient
+from scrapers import scrape_members
 
 
 def make_sure_an_account_exists():
@@ -128,25 +129,53 @@ def run(account):
 
 def list_accounts():
     accounts = Account.select()
-    for account in accounts:
-        print(f'{account.id}')
-        print(f'Phone: {account.phone}')
-        print(f'Api Id - {account.api_id}')
-        print(f'Api hash - {account.api_hash}')
-        print('')
+    if len(accounts) > 0:
+        for account in accounts:
+            print(f'{account.id}')
+            print(f'Phone: {account.phone}')
+            print(f'Api Id - {account.api_id}')
+            print(f'Api hash - {account.api_hash}')
+            print('')
+    else:
+        print('No account saved.')
 
 
 def delete_account():
     ids = []
     accounts = Account.select()
-    for account in accounts:
-        print(f'{account.id} - {account.phone}')
-        ids.append(str(account.id))
+    if len(accounts) > 0:
+        for account in accounts:
+            print(f'[{account.id}] - {account.phone}')
+            ids.append(str(account.id))
 
-    account_to_delete_id = None
-    while account_to_delete_id not in ids:
-        account_to_delete_id = input('Wich account do you want to delete? ')
-    account = Account.select().where(Account.id == account_to_delete_id).get()
-    account.delete_instance()
-    print(f'Successfully deleted {account.phone}')
+        account_to_delete_id = None
+        while account_to_delete_id not in ids:
+            account_to_delete_id = input('Wich account do you want to delete? ')
+        account = Account.select().where(Account.id == account_to_delete_id).get()
+        account.delete_instance()
+        print(f'Successfully deleted {account.phone}')
+    else:
+        print('No account saved.')
 
+
+
+def choose_group():
+    accounts = Account.select()
+    if len(accounts) > 0:
+        ids = []
+        for account in accounts:
+            print(f'[{account.id}] - {account.phone}')
+            ids.append(str(account.id))
+        account_to_use_id = None
+        while account_to_use_id not in ids:
+            account_to_use_id = input('Wich account do you want to use? ')
+        account = Account.select().where(Account.id == account_to_use_id).get()
+
+        print(f'Logged in with {account.phone} so you can select a telegram group')
+        client = TelegramClient(
+            account.phone, account.api_id, account.api_hash)
+        client.connect()
+        scrape_members(client)
+        client.disconnect()
+    else:
+        print('No account saved.')

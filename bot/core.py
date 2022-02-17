@@ -11,6 +11,7 @@ from utils import (get_usernames,
                    print_accounts,
                    delete_account,
                    ask_to_add_new_account,
+                   choose_group,
                    run,
                    list_accounts,
                    keep_running)
@@ -18,7 +19,6 @@ from utils import (get_usernames,
 
 def core():
     try:
-        make_sure_an_account_exists()
         accounts = Account.select()
 
         while True:
@@ -42,21 +42,19 @@ def core():
                  delete_account()
 
             if action == '4':
-                print(f'Logged in with {accounts[0].phone} so you can select a telegram group')
-                client = TelegramClient(
-                    accounts[0].phone, accounts[0].api_id, accounts[0].api_hash)
-                client.connect()
-                scrape_members(client)
-                client.disconnect()
+                choose_group()
 
             elif action == '5':
-                processes = []
-                for account in accounts:
-                    p = multiprocessing.Process(target=run, args=[account])
-                    p.start()
-                    processes.append(p)
-                for process in processes:
-                    process.join()
+                if len(accounts) > 0:
+                    processes = []
+                    for account in accounts:
+                        p = multiprocessing.Process(target=run, args=[account])
+                        p.start()
+                        processes.append(p)
+                    for process in processes:
+                        process.join()
+                else:
+                    print('No accounts found')
 
             print('')
             a = input('Do you want to continue? ').lower()
