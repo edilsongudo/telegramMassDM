@@ -1,4 +1,5 @@
 import csv
+import os
 import random
 import time
 from telethon.errors.rpcerrorlist import PeerFloodError
@@ -13,26 +14,40 @@ def make_sure_an_account_exists():
         save_credentials()
 
 
-def send_messages(client, message, usernames, phone="", min_sleep=45, max_sleep=90):
-    for username in usernames:
-        query = MessageSent.select().where(MessageSent.username ==
-                                           username, MessageSent.message == message)
-        if not query.exists():
-            print('Sending Message...')
-            try:
-                client.send_message(username, message)
-                message_record = MessageSent(
-                    username=username, message=message)
-                message_record.save()
-                print(f'Sent message "{message}" to user "{username}" using phone {phone}')
-                sleep_seconds = random.randint(min_sleep, max_sleep)
-                print(f'Waiting {sleep_seconds} seconds for safety')
-                time.sleep(sleep_seconds)
-            except PeerFloodError:
-                print(f'{phone} reached Telegram daily limit! Stopping now')
-                break
-        else:
-            print('Already Sent this message Message. Skipping...')
+def load_message_to_send():
+    if not os.path.isfile('message.txt'):
+        with open('message.txt', 'w') as f:
+            f.write('')
+    with open('message.txt', 'r') as f:
+        message = f.read().strip()
+
+    return message
+
+
+def send_messages(client, message, usernames, phone="", min_sleep=60, max_sleep=120):
+    if len(message) > 0:
+        for username in usernames:
+            query = MessageSent.select().where(MessageSent.username ==
+                                               username, MessageSent.message == message)
+            if not query.exists():
+                print('Sending Message...')
+                try:
+                    client.send_message(username, message)
+                    message_record = MessageSent(
+                        username=username, message=message)
+                    message_record.save()
+                    print(f'Sent message "{message}" to user "{username}" using phone {phone}')
+                    sleep_seconds = random.randint(min_sleep, max_sleep)
+                    print(f'Waiting {sleep_seconds} seconds for safety')
+                    time.sleep(sleep_seconds)
+                except PeerFloodError:
+                    print(f'{phone} reached Telegram daily limit! Stopping now')
+                    break
+            else:
+                print('Already Sent this message Message. Skipping...')
+    else:
+        print('You did not defined a message to send to users')
+        print('Please open file message.txt and paste the message you need to be sent')
 
 
 def get_usernames():
