@@ -1,7 +1,7 @@
+import asyncio
 import csv
 import os
 import random
-import time
 from telethon.errors.rpcerrorlist import PeerFloodError
 from models import MessageSent, Account
 from telethon.sync import TelegramClient
@@ -16,16 +16,16 @@ def make_sure_an_account_exists():
 
 
 def load_message_to_send():
-    if not os.path.isfile('message.txt'):
+    if not os.path.isfile('message.txt',):
         with open('message.txt', 'w') as f:
             f.write('')
-    with open('message.txt', 'r') as f:
+    with open('message.txt', 'r', encoding='utf-8') as f:
         message = f.read().strip()
 
     return message
 
 
-def send_messages(client, message, usernames, phone="", min_sleep=60, max_sleep=120):
+async def send_messages(client, message, usernames, phone="", min_sleep=240, max_sleep=360):
     if len(message) > 0:
         for username in usernames:
             query = MessageSent.select().where(MessageSent.username ==
@@ -33,19 +33,19 @@ def send_messages(client, message, usernames, phone="", min_sleep=60, max_sleep=
             if not query.exists():
                 print('Sending Message...')
                 try:
-                    client.send_message(username, message)
+                    await client.send_message(username, message)
                     message_record = MessageSent(
                         username=username, message=message)
                     message_record.save()
                     print(f'Sent message "{message}" to user "{username}" using phone {phone}')
                     sleep_seconds = random.randint(min_sleep, max_sleep)
                     print(f'Waiting {sleep_seconds} seconds for safety')
-                    time.sleep(sleep_seconds)
+                    await asyncio.sleep(sleep_seconds)
                 except PeerFloodError:
                     print(f'{phone} reached Telegram daily limit! Stopping now')
                     break
             else:
-                print('Already Sent this message Message. Skipping...')
+                print('Already sent this message. Skipping...')
     else:
         print('You did not defined a message to send to users')
         print('Please open file message.txt and paste the message you need to be sent')
@@ -54,7 +54,7 @@ def send_messages(client, message, usernames, phone="", min_sleep=60, max_sleep=
 def get_usernames():
     if os.path.isfile('members.csv'):
         try:
-            with open('members.csv', 'r') as f:
+            with open('members.csv', 'r', encoding='utf-8') as f:
                 csvreader = csv.reader(f)
                 usernames = []
                 for line in csvreader:
@@ -120,10 +120,10 @@ def ask_to_add_new_account():
         save_credentials()
 
 
-def run(account):
+async def run(account):
     client = TelegramClient(account.phone, account.api_id, account.api_hash)
-    client.connect()
-    send_messages(client, message=load_message_to_send(),
+    await client.connect()
+    await send_messages(client, message=load_message_to_send(),
                   usernames=get_usernames(), phone=account.phone)
 
 
@@ -153,6 +153,7 @@ def delete_account():
             account_to_delete_id = input('Wich account do you want to delete? ')
         account = Account.select().where(Account.id == account_to_delete_id).get()
         account.delete_instance()
+        os.remove(f'{account.phone}.session')
         print(f'Successfully deleted {account.phone}')
     else:
         print('No account saved.')
