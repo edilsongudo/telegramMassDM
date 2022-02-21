@@ -13,11 +13,11 @@ def core():
         while True:
             action = False
             print('What do you want to do? ')
-            print('[1] - Add a new Telegram account.')
+            print('[1] - Add a new Telegram account')
             print('[2] - List Telegram accounts')
             print('[3] - Delete a Telegram account')
             print(
-                '[4] - Select wich group the bot will use to send next messages.'
+                '[4] - Select wich group the bot will use to send next messages'
             )
             print('[5] - Start Mass DM')
             print('[6] - Change min and max sleep seconds per DM sent')
@@ -44,7 +44,6 @@ def core():
                         tasks.append(loop.create_task(run(account)))
                     wait_tasks = asyncio.wait(tasks)
                     loop.run_until_complete(wait_tasks)
-                    loop.close()
                 else:
                     print('No accounts found')
 

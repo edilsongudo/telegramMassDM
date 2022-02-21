@@ -32,8 +32,8 @@ async def send_messages(
     client, message, usernames, phone=''):
     sleep_obj = SleepTime().select().get()
 
-    MIN_SLEEP = sleep_obj.max_sleep_seconds
-    MAX_SLEEP = sleep_obj.min_sleep_seconds
+    MIN_SLEEP = sleep_obj.min_sleep_seconds
+    MAX_SLEEP = sleep_obj.max_sleep_seconds
 
     if len(message) > 0:
         for username in usernames:
@@ -151,14 +151,17 @@ def ask_to_add_new_account():
 
 
 async def run(account):
-    client = TelegramClient(account.phone, account.api_id, account.api_hash)
-    await client.connect()
-    await send_messages(
-        client,
-        message=load_message_to_send(),
-        usernames=get_usernames(),
-        phone=account.phone,
-    )
+    try:
+        client = TelegramClient(account.phone, account.api_id, account.api_hash)
+        await client.connect()
+        await send_messages(
+            client,
+            message=load_message_to_send(),
+            usernames=get_usernames(),
+            phone=account.phone,
+        )
+    except Exception as e:
+        print(e)
 
 
 def list_accounts():
