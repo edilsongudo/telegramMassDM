@@ -1,5 +1,11 @@
-peewee==3.14.8
+certifi==2022.12.7
+charset-normalizer==3.0.1
+idna==3.4
+peewee==3.15.4
 pyaes==1.6.1
 pyasn1==0.4.8
+requests==2.28.2
 rsa==4.8
-Telethon==1.24.0
+telebot==0.0.4
+Telethon==1.27.0
+urllib3==1.26.14
